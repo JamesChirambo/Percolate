@@ -1,0 +1,147 @@
+#!/bin/bash
+
+# You may want to edit the following lines: use "qos=standard" for
+# more than 2 nodes. Replace "account=dc034" below with your own
+# budget code (e.g. dc034-s1234567)
+
+#SBATCH --account=dc034-s1790387
+#SBATCH --job-name=percolate_parallel
+#SBATCH --time=00:01:00
+#SBATCH --qos=standard
+#SBATCH --nodes=1
+#SBATCH --ntasks=4
+
+# You can probably leave these options mostly as they are
+
+#SBATCH --output=%x-%j.out
+#SBATCH --error=%x-%j.err
+#SBATCH --exclusive
+#SBATCH --tasks-per-node=36
+#SBATCH --cpus-per-task=1
+#SBATCH --partition=standard
+
+module load intel-compilers-19
+module load mpt
+
+# Change to the submission directory
+cd $SLURM_SUBMIT_DIR
+
+# Set the number of threads to 1
+#   This prevents any threaded system libraries from automatically
+#   using threading.
+export OMP_NUM_THREADS=1
+
+# Launch the parallel job
+
+L = 768
+for nproc in {1..4} do
+    problemsize = L * n
+    if (n = 1){
+        for t in {1..36} do
+            srun --ntasks=$t --cpu-bind=$nproc ./percolate 7777 $problemsize 1 2 0 1
+        done
+    }
+    else {
+        srun --ntasks=36 --cpu-bind=$nproc ./percolate 7777 $problemsize 1 2 0 1
+    }
+
+done
+
+#Wait for all
+wait
+ 
+echo
+echo "All done."
+
+# 1 node
+dpsize=768
+for nproc in 1 2 4 8 18 36
+do
+    for t in 1 2 3
+    do
+        problemsize=$((dpsize*t))
+        srun --ntasks=$nproc --cpu-bind=core ./percolate 7777 $problemsize 0.4040 2 0 1
+        srun --ntasks=$nproc --cpu-bind=core ./percolate 7777 $problemsize 0.4040 2 0 1
+        srun --ntasks=$nproc --cpu-bind=core ./percolate 7777 $problemsize 0.4040 2 0 1
+    done
+
+done
+
+#Wait for all
+wait
+ 
+echo
+echo "All done."
+
+
+
+# 2+ nodes
+L = 768
+for t in 1 2 3
+do
+        problemsize = L * t
+        srun --unbuffered --cpu-bind=core ./percolate 7777 $problemsize 0.4040 2 0 1
+        srun --unbuffered --cpu-bind=core ./percolate 7777 $problemsize 0.4040 2 0 1
+        srun --unbuffered --cpu-bind=core ./percolate 7777 $problemsize 0.4040 2 0 1
+done
+
+#Wait for all
+wait
+ 
+echo
+echo "All done."
+
+
+
+srun --unbuffered --cpu-bind=core ./percolate 7777 768 0.4040 2 1
+
+
+
+1
+2
+4
+8
+18
+36
+
+
+for problemsize in 36 72 144 288 768 1536; do
+    if [[ $problemsize == 1 ]]; then
+            iter=2985984
+    elif [[ $problemsize == 2 ]]; then
+            iter=746496
+    elif [[ $problemsize == 4 ]]; then
+            iter=186624
+    elif [[ $problemsize == 12 ]]; then
+            iter=20736
+    elif [[ $problemsize == 18 ]]; then
+            iter=9216
+    elif [[ $problemsize == 36 ]]; then
+            iter=2304
+    elif [[ $problemsize == 72 ]]; then
+            iter=576
+    elif [[ $problemsize == 144 ]]; then
+            iter=144
+    elif [[ $problemsize == 288 ]]; then
+            iter=36
+    else
+            iter=0
+    fi
+
+    ss=$((problemsize*36))
+    pn=$problemsize && [[ $problemsize -gt 36 ]]  && pn=36
+
+    if [[ $(( ss%problemsize )) == 0 ]]; then
+
+        for tn in 1 2 3; do
+            echo RUN $tn
+            echo srun --ntasks=$np --cpu-bind=$nproc ./percolate 7777 0 1
+            echo  mpiexec_mpt -ppn $pn -n $problemsize ./cfd_intel $problemsize $iter
+            wait
+        done
+
+    else
+        echo Skipping Scale Factor $problemsize: System Size $ss is not divisible by $problemsize Processes.
+    fi
+    
+done
