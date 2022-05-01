@@ -8,7 +8,7 @@ Then, using MPI cartesian topology, each process is arranged into a 2D grid and 
 This information is then used to identify each processor's 4 neighbours (left/right; up/down), determine processor's section of the global map, and determine the local map size. The simulation arrays are then initialised on each process with appropriate size.  The controller process then splits the global map, sends them to the appropriate processes, while the all the other processes receive their part of the map. On each process, the percolation loop starts by initialising a halo swap then the update process takes place, followed by gathering the number of changes that occured, completing the halo swap before checking if the there were no changes in the update (to exit the loop if necessary). This is repeated for a defined number of steps.  Once the loop completes, all processes send their part of the updated map (without halos) to the controller process, and the controller processer receives them into the desgnated space of the map.
 
 
-> ## Source and Header Files: (located in the same folder)
+> ## Source and Header Files: (all at the top level of the source code)
 --------------------------------------------------------------------------
 
 >> **Source file and Functionality**
