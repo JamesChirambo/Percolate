@@ -1,12 +1,12 @@
 MF=	Makefile
 
 # For Local (MPICH)
-CC=	mpicc
-CFLAGS=	-O3 -lm -Wall
+#CC=	mpicc
+#CFLAGS=	-O3 -lm -Wall
 
 # For Cirrus
-#CC=	mpicc
-#CFLAGS=	-cc=icc
+CC=	mpicc
+CFLAGS=	-O3 -lm -Wall
 
 # For ARCHER2
 #CC=	cc
