@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Slurm job options (name, compute nodes, job time)
+#SBATCH --nodes=1
+#SBATCH --tasks-per-node=4
+#SBATCH --job-name=percolate
+#SBATCH --time=00:01:00
+#SBATCH --output=%x-%j.out
+#SBATCH --cpus-per-task=1
+#SBATCH --partition=standard
+# Replace [budget code] below with your budget code (e.g. ta012-mycode)
+# This is commented out so it will use the default project budget
+#SBATCH --account=d176
+# The commands below select the short queue for small jobs
+# For long or large jobs, use --qos=standard and omit the reservation
+#SBATCH --qos=short
+
+# Set the number of threads to 1
+#   This prevents any threaded system libraries from automatically
+#   using threading.
+
+export OMP_NUM_THREADS=1
+
+# Do I need to load mpi modules here? As I understand it I do not need to, but I am getting an error when I run the job.
+
+
+# Use "srun" to launch the job
+# USAGE: *<program> *<seed>  [problem size] [checkchange]{1=yes, 0=no} [nclusters] [rho]
+
+srun --unbuffered --distribution=block:block ./percolate 7777 0 1
